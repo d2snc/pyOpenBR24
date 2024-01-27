@@ -1,6 +1,6 @@
 #!/usr/bin/python
-import Tkinter as tk
-import ttk
+import tkinter as tk
+from tkinter import ttk
 import br24_driver
 from PIL import Image, ImageTk
 import time
@@ -16,7 +16,7 @@ class br24_ctrl_window(threading.Thread):
         self.master = master
         master.wm_title("BR24 radar options")
 
-        self.br = br
+        self.br = br #Radar driver
 
         self.frame = tk.Frame(self.master)
         self.local_interference_opts = ['off', 'low','medium', 'high']
@@ -26,7 +26,7 @@ class br24_ctrl_window(threading.Thread):
         self.fp_opts = ['Gain', 'Rain Clutter Filter', 'Sea Clutter Filter']
         self.fp_vals = ['auto_gain', 'manual_gain', 'rain_clutter_manual', 'sea_clutter_auto', 'sea_clutter_manual']
         self.fp_opts = ['Auto']
-        print self.fp_opts.extend(range(1,0x50))
+        print (self.fp_opts.extend(range(1,0x50)))
 
         self.button1 = tk.Button(self.frame, text = 'Start Radar', width = 25, command = self.start_driver)
         self.button1.pack()
@@ -105,39 +105,39 @@ class br24_ctrl_window(threading.Thread):
         self.button1.config(text = 'Start Radar', width = 25, command = self.start_driver)
 
     def increase_scan_speed(self):
-        print "increasing scanning speed by %s"%(1)
+        print ("increasing scanning speed by %s"%(1))
         self.br.increase_scan_speed(1)
 
     def reset_scan_speed(self):
-        print "resetting scanning speed to normal"
+        print ("resetting scanning speed to normal")
         self.br.reset_scan_speed()
 
     def set_filter_preprocessing(self, event):
-        print "setting "
+        print ("setting ")
         self.br.increase_scan_speed(val)
 
     def radar_range_cmd(self, event):
         val = self.radar_range_cbox.get() 
-        if val is not '':
-            print "setting radar range to %s"%(val)
+        if (val != ''):
+            print ("setting radar range to %s"%(val))
             self.br.set_radar_range(self.radar_range_opts.index(val))
 
     def interference_reject_cmd(self, event):
         val = self.interference_reject_cbox.get()
-        if val is not '':
-            print "setting interference rejection %s"%(val)
+        if (val != ''):
+            print ("setting interference rejection %s"%(val))
             self.br.set_interference_rejection(self.interference_reject_opts.index(val))
 
     def local_interference_cmd(self, event):
         val = self.local_interference_cbox.get()
-        if val is not '':
-            print "setting local interference filter %s"%(val)
+        if (val != ''):
+            print ("setting local interference filter %s"%(val))
             self.br.set_local_interference_filter(self.local_interference_opts.index(val))
             
     def target_boost_cmd(self, event):
         val =self.target_boost_cbox.get()
-        if val is not '':
-            print "setting target boost %s"%(val)
+        if (val != ''):
+            print ("setting target boost %s"%(val))
             self.br.set_target_boost(self.target_boost_opts.index(val))
 
     def run(self):
@@ -153,10 +153,10 @@ class br24_ctrl_window(threading.Thread):
                 if last_angle > sc['angle']:
                     #self.image_window.update_radar_image()
                     curr_time = time.time()-start_time
-                    print "finished full scan: %s %s"%(curr_time,last_angle)
-                    print "processed %d scan lines"%(count)
-                    print "socket queue size: %d"%(self.br.data_q.qsize())
-                    print "scanline queue size: %d"%(self.br.scan_data_decoder.scanlines.qsize())
+                    print ("finished full scan: %s %s"%(curr_time,last_angle))
+                    print ("processed %d scan lines"%(count))
+                    print ("socket queue size: %d"%(self.br.data_q.qsize()))
+                    print ("scanline queue size: %d"%(self.br.scan_data_decoder.scanlines.qsize()))
                     count = 0 
                     start_time = time.time()
 
@@ -192,9 +192,9 @@ class br24_image_window:
         # add the reference circles to the canvas
         n_circles = 4
         r_step = 256/n_circles
-        self.reference_circles = [self.radar_canvas.create_oval(0,0,1,1, fill=None, outline="gray25", dash=(4,4)) for x in xrange(n_circles)]
+        self.reference_circles = [self.radar_canvas.create_oval(0,0,1,1, fill=None, outline="gray25", dash=(4,4)) for x in range(n_circles)]
         # annotate the circles with distances
-        self.reference_labels = [self.radar_canvas.create_text(0,0, text="10", anchor="ne", fill="gray35", font="Helvetica 9") for x in xrange(n_circles)]
+        self.reference_labels = [self.radar_canvas.create_text(0,0, text="10", anchor="ne", fill="gray35", font="Helvetica 9") for x in range(n_circles)]
         
         # place canvas in frame, frame in window
         self.radar_canvas.pack(fill = "both", expand = 1)
@@ -251,15 +251,15 @@ class br24_image_window:
         r_max = len(sc['data'])
 
         with self.mutex:
-            for r in xrange(r_max):
-                intensity = ord(sc['data'][r])
+            for r in range(r_max):
+                intensity = sc['data'][r]
                 x = int(self.center_x + r*self.scale*sin_ang)
                 y = self.height - int(self.center_y + r*self.scale*cos_ang) - 1
                 #y = int(center + r*scale*cos_ang)
                 try:
                     self.pixels[x,y] = (0,intensity,20)
                 except:
-                    print "index out of range x=%d y=%d (w=%d,h=%d)"%(x,y,self.width,self.height)
+                    print ("index out of range x=%d y=%d (w=%d,h=%d)"%(x,y,self.width,self.height))
 
     def draw_scanline_ros(self, msg):
         sc = {}

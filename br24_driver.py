@@ -37,7 +37,7 @@ class multicast_socket(Process):
             mreq = s_pack('=4sl', group, socket.INADDR_ANY)
         else:
             # 
-            print iface_ip
+            print(iface_ip)
             mreq = group + socket.inet_aton(iface_ip)
             self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(iface_ip))
 
@@ -48,8 +48,11 @@ class multicast_socket(Process):
     def close(self):
         self.sock.close()
 
-    def write(self,data):
+    def write(self, data):
+        if isinstance(data, str):
+            data = data.encode()  # encode string to bytes
         self.sock.sendto(data, (self.address, self.port))
+
 
     def read(self, block = True):
         return self.data_q.get(block)
@@ -71,14 +74,14 @@ class multicast_socket(Process):
 
         while alive.is_set():
             data, addr = sock.recvfrom(buffer_size)
-            #print "multicast_socket:: Got %s"%(binascii.hexlify(data[:64]))
+            print ("multicast_socket:: Got %s"%(binascii.hexlify(data[:64])))
             if data_q.qsize() > max_qsize:
                 data_q.get()
             data_q.put(data)
             time.sleep(0.0001)
 
     def stop(self):
-        print "Stopping multicast socket %s..."%(self.name)
+        print("Stopping multicast socket %s..."%(self.name))
         self.alive.clear()
         self.sock.close()
 
@@ -152,7 +155,7 @@ class br24_frame_decoder:
         i = 0
         nbytes = len(data)
         while i < nbytes:
-            byte = data[i]
+            byte = data[i:i+1].decode('utf-8', errors= 'replace') #Pega o byte
             # check if we have a valid header (i.e. starting with 01 00 00 00 00)
             if state <= self.FR_START_DONE: 
                 if byte == self.FRAME_START_SEQUENCE[state]:
@@ -183,7 +186,7 @@ class br24_frame_decoder:
             elif state == self.SC_START_HEADER:
                     curr_sc = {}
                     scanline_header = []
-                    scanline_data = ''
+                    scanline_data = b''
                     scanline_header_size = ord(byte)
                     scanline_header.append(byte)
                     state = self.SC_HEADER
@@ -202,10 +205,10 @@ class br24_frame_decoder:
                 #print "header: %s size %s"%(scanline_header,scanline_header_size)
                 # if we got the full header, extract the data
                 if len(scanline_header) == scanline_header_size:
-                    curr_sc['status'] = ord(scanline_header[1])
-                    curr_sc['index'] = ord(scanline_header[2]) | ord(scanline_header[3])<<8
-                    curr_sc['angle'] = ord(scanline_header[8]) | ord(scanline_header[9])<<8
-                    curr_sc['scale'] = ord(scanline_header[12]) | ord(scanline_header[13])<<8
+                    curr_sc['status'] = scanline_header[1]
+                    curr_sc['index'] = scanline_header[2] | scanline_header[3]<<8
+                    curr_sc['angle'] = scanline_header[8] | scanline_header[9]<<8
+                    curr_sc['scale'] = scanline_header[12] | scanline_header[13]<<8
                     curr_sc['time'] = time.time()
                     state = self.SC_DATA
             # process scanline bytes
@@ -287,21 +290,21 @@ class br24(Process):
         time.sleep(0.001)
 
     def start_radar(self):
-        print "Starting radar..."
+        print("Starting radar...")
         self.send_command(self.CMD_POWER_1,'\x01')
         self.send_command(self.CMD_POWER_2,'\x01')
         self.radar_on = True
         return True
 
     def stop_radar(self):
-        print "Stopping radar..."
+        print ("Stopping radar...")
         self.send_command(self.CMD_POWER_1,'\x00')
         self.send_command(self.CMD_POWER_2,'\x00')
         self.radar_on = False
         return True
 
     def increase_scan_speed(self,multiplier):
-        for i in xrange(multiplier):
+        for i in range(multiplier):
             self.send_command(self.CMD_SCAN_SPEED,'\x01')
         return True
 
@@ -384,7 +387,7 @@ class br24(Process):
                 time.sleep(0.0001)
                 
     def stop(self):
-        print "Stopping radar driver..."
+        print ("Stopping radar driver...")
         self.scan_data_socket.stop()
         self.stop_radar()
         self.alive.clear()
